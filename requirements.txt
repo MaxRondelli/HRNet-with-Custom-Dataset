@@ -1,6 +1,6 @@
 EasyDict==1.7
-opencv-python==3.4.1.15
-shapely==1.6.4
+opencv-python
+shapely
 Cython
 scipy
 pandas
