@@ -188,7 +188,6 @@ def parse_args():
     args.prevModelDir = ''
     return args
 
-
 def main():
     # transformation
     pose_transform = transforms.Compose([
@@ -304,11 +303,6 @@ def main():
         text = "{:03.2f} sec".format(total_then - total_now)
         cv2.putText(image_debug, text, (100, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (0, 0, 255), 2, cv2.LINE_AA)
-
-        # cv2.imshow("pos", image_debug)
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
-
         csv_output_rows.append(new_csv_row)
         img_file = os.path.join(pose_dir, 'pose_{:08d}.png'.format(count))
         cv2.imwrite(img_file, image_debug)
