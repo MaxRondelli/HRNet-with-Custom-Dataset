@@ -28,27 +28,22 @@ from config import update_config
 from core.function import get_final_preds
 from utils.transforms import get_affine_transform
 
-COCO_KEYPOINT_INDEXES = {
-    0: 'nose',
-    1: 'left_eye',
-    2: 'right_eye',
-    3: 'left_ear',
-    4: 'right_ear',
-    5: 'left_shoulder',
-    6: 'right_shoulder',
-    7: 'left_elbow',
-    8: 'right_elbow',
-    9: 'left_wrist',
-    10: 'right_wrist',
-    11: 'left_hip',
-    12: 'right_hip',
-    13: 'left_knee',
-    14: 'right_knee',
-    15: 'left_ankle',
-    16: 'right_ankle'
+CUSTOM_DATASET_KEYPOINT_INDEXES = {
+    0: 'caviglia_dx',
+    1: 'caviglia_sx',
+    2: 'ginocchio_dx',
+    3: 'ginocchio_sx',
+    4: 'bacino_dx',
+    5: 'bacino_sx',
+    6: 'mano_dx',
+    7: 'mano_sx',
+    8: 'gomito_dx',
+    9: 'gomito_sx',
+    10: 'spalla_dx',
+    11: 'spalla_sx'
 }
 
-COCO_INSTANCE_CATEGORY_NAMES = [
+CUSTOM_DATASET_INSTANCE_CATEGORY_NAMES = [
     '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
     'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'N/A', 'stop sign',
     'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
@@ -64,20 +59,19 @@ COCO_INSTANCE_CATEGORY_NAMES = [
 ]
 
 SKELETON = [
-    [1,3],[1,0],[2,4],[2,0],[0,5],[0,6],[5,7],[7,9],[6,8],[8,10],[5,11],[6,12],[11,12],[11,13],[13,15],[12,14],[14,16]
+    [0, 2], [2, 4], [4, 10], [10, 8], [8, 6], [10, 11], [4, 5], [1, 3], [3, 5], [5, 11], [11, 9], [9, 7] 
 ]
 
 CocoColors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
-              [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255],
-              [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]]
+              [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255]]
 
-NUM_KPTS = 17
+NUM_KPTS = 12
 
 CTX = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
 def draw_pose(keypoints,img):
     """draw the keypoints and the skeletons.
-    :params keypoints: the shape should be equal to [17,2]
+    :params keypoints: the shape should be equal to [12,2]
     :params img:
     """
     assert keypoints.shape == (NUM_KPTS,2)
@@ -98,7 +92,7 @@ def draw_bbox(box,img):
 
 def get_person_detection_boxes(model, img, threshold=0.5):
     pred = model(img)
-    pred_classes = [COCO_INSTANCE_CATEGORY_NAMES[i]
+    pred_classes = [CUSTOM_DATASET_INSTANCE_CATEGORY_NAMES[i]
                     for i in list(pred[0]['labels'].cpu().numpy())]  # Get the Prediction Score
     pred_boxes = [[(i[0], i[1]), (i[2], i[3])]
                   for i in list(pred[0]['boxes'].detach().cpu().numpy())]  # Bounding boxes
@@ -194,7 +188,7 @@ def box_to_center_scale(box, model_image_width, model_image_height):
 def parse_args():
     parser = argparse.ArgumentParser(description='Train keypoints network')
     # general
-    parser.add_argument('--cfg', type=str, default='demo/inference-config.yaml')
+    parser.add_argument('--cfg', type=str, default='/home/massimorondelli/HRNet/HRNet-Human-Pose-Estimation/demo/inference-config.yaml')
     parser.add_argument('--video', type=str)
     parser.add_argument('--webcam',action='store_true')
     parser.add_argument('--image',type=str)
@@ -254,6 +248,7 @@ def main():
         print('please use --video or --webcam or --image to define the input.')
         return 
 
+    count_pose = 0
     if args.webcam or args.video:
         if args.write:
             save_path = 'output.avi'
@@ -261,6 +256,7 @@ def main():
             out = cv2.VideoWriter(save_path,fourcc, 24.0, (int(vidcap.get(3)),int(vidcap.get(4))))
         while True:
             ret, image_bgr = vidcap.read()
+
             if ret:
                 last_time = time.time()
                 image = image_bgr[:, :, [2, 1, 0]]
@@ -271,7 +267,7 @@ def main():
                 input.append(img_tensor)
 
                 # object detection box
-                pred_boxes = get_person_detection_boxes(box_model, input, threshold=0.9)
+                pred_boxes = get_person_detection_boxes(box_model, input, threshold=0.75)
 
                 # pose estimation
                 if len(pred_boxes) >= 1:
@@ -281,7 +277,10 @@ def main():
                         pose_preds = get_pose_estimation_prediction(pose_model, image_pose, center, scale)
                         if len(pose_preds)>=1:
                             for kpt in pose_preds:
-                                draw_pose(kpt,image_bgr) # draw the poses
+                                draw_pose(kpt, image_bgr) # draw the poses
+
+                print("count pose: " + str(count_pose))
+                count_pose += 1 
 
                 if args.showFps:
                     fps = 1/(time.time()-last_time)
@@ -289,10 +288,6 @@ def main():
 
                 if args.write:
                     out.write(image_bgr)
-
-                cv2.imshow('demo',image_bgr)
-                if cv2.waitKey(1) & 0XFF==ord('q'):
-                    break
             else:
                 print('cannot load the video.')
                 break
@@ -331,13 +326,9 @@ def main():
             img = cv2.putText(image_bgr, 'fps: '+ "%.2f"%(fps), (25, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
         
         if args.write:
-            save_path = 'output.jpg'
+            save_path = 'output.png'
             cv2.imwrite(save_path,image_bgr)
             print('the result image has been saved as {}'.format(save_path))
 
-        cv2.imshow('demo',image_bgr)
-        if cv2.waitKey(0) & 0XFF==ord('q'):
-            cv2.destroyAllWindows()
-        
 if __name__ == '__main__':
     main()

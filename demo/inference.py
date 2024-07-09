@@ -23,8 +23,8 @@ import sys
 sys.path.append("../lib")
 import time
 
-# import _init_paths
-import models
+import _init_paths
+import models 
 from config import cfg
 from config import update_config
 from core.inference import get_final_preds
@@ -32,28 +32,22 @@ from utils.transforms import get_affine_transform
 
 CTX = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-
-COCO_KEYPOINT_INDEXES = {
-    0: 'nose',
-    1: 'left_eye',
-    2: 'right_eye',
-    3: 'left_ear',
-    4: 'right_ear',
-    5: 'left_shoulder',
-    6: 'right_shoulder',
-    7: 'left_elbow',
-    8: 'right_elbow',
-    9: 'left_wrist',
-    10: 'right_wrist',
-    11: 'left_hip',
-    12: 'right_hip',
-    13: 'left_knee',
-    14: 'right_knee',
-    15: 'left_ankle',
-    16: 'right_ankle'
+CUSTOM_DATASET_KEYPOINT_INDEXES = {
+    0: 'caviglia_dx',
+    1: 'caviglia_sx',
+    2: 'ginocchio_dx',
+    3: 'ginocchio_sx',
+    4: 'bacino_dx',
+    5: 'bacino_sx',
+    6: 'mano_dx',
+    7: 'mano_sx',
+    8: 'gomito_dx',
+    9: 'gomito_sx',
+    10: 'spalla_dx',
+    11: 'spalla_sx'
 }
 
-COCO_INSTANCE_CATEGORY_NAMES = [
+CUSTOM_DATASET_INSTANCE_CATEGORY_NAMES = [
     '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
     'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'N/A', 'stop sign',
     'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
@@ -68,14 +62,13 @@ COCO_INSTANCE_CATEGORY_NAMES = [
     'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush'
 ]
 
-
 def get_person_detection_boxes(model, img, threshold=0.5):
     pil_image = Image.fromarray(img)  # Load the image
     transform = transforms.Compose([transforms.ToTensor()])  # Defing PyTorch Transform
     transformed_img = transform(pil_image)  # Apply the transform to the image
     pred = model([transformed_img.to(CTX)])  # Pass the image to the model
     # Use the first detected person
-    pred_classes = [COCO_INSTANCE_CATEGORY_NAMES[i]
+    pred_classes = [CUSTOM_DATASET_INSTANCE_CATEGORY_NAMES[i]
                     for i in list(pred[0]['labels'].cpu().numpy())]  # Get the Prediction Score
     pred_boxes = [[(i[0], i[1]), (i[2], i[3])]
                   for i in list(pred[0]['boxes'].cpu().detach().numpy())]  # Bounding boxes
@@ -269,7 +262,7 @@ def main():
 
         # object detection box
         now = time.time()
-        pred_boxes = get_person_detection_boxes(box_model, image_per, threshold=0.9)
+        pred_boxes = get_person_detection_boxes(box_model, image_per, threshold=0.8)
         then = time.time()
         print("Find person bbox in: {} sec".format(then - now))
 
@@ -280,6 +273,8 @@ def main():
 
         if args.writeBoxFrames:
             for box in pred_boxes:
+                box[0] = (int(box[0][0]), int(box[0][1]))
+                box[1] = (int(box[1][0]), int(box[1][1]))
                 cv2.rectangle(image_debug, box[0], box[1], color=(0, 255, 0),
                               thickness=3)  # Draw Rectangle with the coordinates
 
@@ -310,19 +305,18 @@ def main():
         cv2.putText(image_debug, text, (100, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (0, 0, 255), 2, cv2.LINE_AA)
 
-        cv2.imshow("pos", image_debug)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        # cv2.imshow("pos", image_debug)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
 
         csv_output_rows.append(new_csv_row)
-        img_file = os.path.join(pose_dir, 'pose_{:08d}.jpg'.format(count))
+        img_file = os.path.join(pose_dir, 'pose_{:08d}.png'.format(count))
         cv2.imwrite(img_file, image_debug)
         outcap.write(image_debug)
 
-
     # write csv
     csv_headers = ['frame']
-    for keypoint in COCO_KEYPOINT_INDEXES.values():
+    for keypoint in CUSTOM_DATASET_KEYPOINT_INDEXES.values():
         csv_headers.extend([keypoint+'_x', keypoint+'_y'])
 
     csv_output_filename = os.path.join(args.outputDir, 'pose-data.csv')
