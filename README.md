@@ -2,10 +2,6 @@
 
 This repository is a mirror of the original High-Resolution Network (HRNet) repository, which can be found [here](https://github.com/leoxiaobin/deep-high-resolution-net.pytorch). The primary purpose of this repository is to provide instructions and code modifications for training HRNet on your own custom dataset.
 
-## Overview
-
-HRNet is a state-of-the-art framework for high-resolution visual recognition tasks. This repository has been customized to enable easy training on your own datasets.
-
 ## Getting Started
 
 To get started with training your own custom dataset using HRNet, follow these steps:
