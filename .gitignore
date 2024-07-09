@@ -83,6 +83,7 @@ target/
 
 lib/pycocotools/_mask.c
 lib/nms/cpu_nms.c
+lib/nms/gpu_nms.cpp
 
 output/*
 models/*
@@ -93,3 +94,6 @@ external/
 draws/
 plot/
 
+lib/cocoapi
+tools/log
+tools/output

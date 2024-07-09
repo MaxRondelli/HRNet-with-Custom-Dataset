@@ -17,7 +17,7 @@ DATASET:
   FLIP: false
   NUM_JOINTS_HALF_BODY: 6
   PROB_HALF_BODY: 0.3
-  ROOT: '/home/massimorondelli/HRNet/HRNet-Human-Pose-Estimation/data/custom_dataset/'
+  ROOT: '/home/massimorondelli/HRNet-with-Custom-Dataset/data/custom_dataset/'
   ROT_FACTOR: 45
   SCALE_FACTOR: 0.35
   TRAIN_SET: 'train'
@@ -26,7 +26,6 @@ MODEL:
   INIT_WEIGHTS: true
   NAME: pose_hrnet
   NUM_JOINTS: 12
-  # PRETRAINED: '/home/massimorondelli/HRNet/HRNet-Human-Pose-Estimation/tools/output/custom_dataset/pose_hrnet/w48_384x288_adam_lr1e-3/model_best.pth'
   PRETRAINED: ''
   TARGET_TYPE: gaussian
   IMAGE_SIZE:

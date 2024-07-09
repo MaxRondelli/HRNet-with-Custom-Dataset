@@ -112,8 +112,8 @@ def main():
 
     logger.info(get_model_summary(model, dump_input))
 
-    model = torch.nn.DataParallel(model, device_ids=cfg.GPUS).cuda()
-
+    model = torch.nn.DataParallel(model, device_ids=(0,)).cuda()
+    
     # define loss function (criterion) and optimizer
     criterion = JointsMSELoss(
         use_target_weight=cfg.LOSS.USE_TARGET_WEIGHT
@@ -123,8 +123,7 @@ def main():
     normalize = transforms.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
     )
-    train_dataset = eval('dataset.'+cfg.DATASET.DATASET)(
-        cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
+    train_dataset = eval('dataset.'+cfg.DATASET.DATASET)(cfg, cfg.DATASET.ROOT, cfg.DATASET.TRAIN_SET, True,
         transforms.Compose([
             transforms.ToTensor(),
             normalize,
