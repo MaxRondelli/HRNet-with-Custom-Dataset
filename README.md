@@ -33,6 +33,83 @@ data/
         train/
         val/
 ```
+The json structure follows COCO structure as well. This is an example of mine `train.json`.
+```json
+{
+  "images": [
+    {
+      "id": 2,
+      "file_name": "train_image.png",
+      "width": 1280,
+      "height": 720
+    }, 
+  ],
+  "annotations": [
+    {
+      "id": 2,
+      "image_id": 2,
+      "category_id": 1,
+      "keypoints": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          559,
+          253,
+          2,
+          0,
+          0,
+          0,
+          433,
+          300,
+          2,
+          0,
+          0,
+          0,
+          481,
+          244,
+          2,
+          0,
+          0,
+          0,
+          483,
+          196,
+          2,
+          0,
+          0,
+          0,
+          368,
+          158,
+          2,
+          0,
+          0,
+          0
+      ],
+      "num_keypoints": 5,
+      "bbox": [
+          368,
+          158,
+          191,
+          142
+      ],
+      "area": 27122,
+      "iscrowd": 0
+    },
+  ],
+  "categories": [
+          {
+            "id": 1,
+            "name": "person",
+            "supercategory": "person",
+            "keypoints": [ your keypoints ],
+            "skeleton": []
+          }
+  ]
+}
+```
+Note: the structure of the dataset is critical. Both of the json files and how the folders are organized. If not respected, the network has difficulty to learn.
 
 ### 3. Configure the Model
 Modify the configuration files located in the experiments directory to suit your dataset and training parameters. 
