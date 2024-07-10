@@ -153,7 +153,17 @@ or
 ```bash
 python3 inference.py --cfg inference-config.yaml --videoFile video.mkv --writeBoxFrames --outputDir /output TEST.MODEL_FILE tools/output/custom_dataset/pose_hrnet/w48_384x288_adam_lr1e-3/model_best.pth
 ```
+## Results for my Custom Dataset
+The dataset has 374 images in total divided in 296 for the training and 75 for the validation.  
 
+Lower results are obtained than the state-of-the-art presented in the paper. However, good human-pose estimation can be achieved at the inference time, resulting in a practical product that can be used for the purposes of the experiment with your custom dataset.
+
+| Method    | Backbone|Pretrain| Input size | #Params | GFLOPs | AP    | AP^50 | AP^75 | AP^M  | AP^L  | AR    |
+|-----------|---------|--------|-----------|---------|--------|-------|-------|-------|-------|-------|-------|
+| HRNet-W32 | HRNet-W32 | N | 256×192| 28.5M   | 7.1    | 0.384 | 0.761 | 0.321 | 0.103 | 0.398 | 0.473 |
+| HRNet-W32 | HRNet-W32 | N | 384×288| 28.5M   | 16.0   | 0.384 | 0.795 | 0.278 | 0.129 | 0.397 | 0.492 |
+| HRNet-W48 | HRNet-W48 | N | 256×192| 63.6M   | 14.6   | 0.501 | **0.863** | 0.452 | **0.252** | 0.515 | 0.560 |
+| HRNet-W48 | HRNet-W48 | N | 384×288| 63.6M   | 32.8   | **0.526** | 0.831 | **0.537** | 0.077 | **0.548** | **0.581** |
 ## Acknowledgments
 This repository is based on the original HRNet repository. I extend our gratitude for their pioneering work in high-resolution visual recognition.
 
