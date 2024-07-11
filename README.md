@@ -154,7 +154,7 @@ or
 python3 inference.py --cfg inference-config.yaml --videoFile video.mkv --writeBoxFrames --outputDir /output TEST.MODEL_FILE tools/output/custom_dataset/pose_hrnet/w48_384x288_adam_lr1e-3/model_best.pth
 ```
 ## Results for my Custom Dataset
-The dataset has 374 images in total divided in 296 for the training and 75 for the validation.  
+The dataset has 374 images in total divided in 296 for training and 78 for validation.  
 
 Lower results are obtained than the state-of-the-art presented in the paper. However, good human-pose estimation can be achieved at the inference time, resulting in a practical product that can be used for the purposes of the experiment with your custom dataset.
 
