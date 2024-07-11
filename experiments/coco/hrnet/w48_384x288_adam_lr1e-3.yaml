@@ -1,4 +1,4 @@
-AUTO_RESUME: true
+AUTO_RESUME: false
 CUDNN:
   BENCHMARK: true
   DETERMINISTIC: false
@@ -26,7 +26,8 @@ MODEL:
   INIT_WEIGHTS: true
   NAME: pose_hrnet
   NUM_JOINTS: 12
-  PRETRAINED: ''
+  PRETRAINED: '/home/massimorondelli/HRNet-with-Custom-Dataset/models/pose_coco/pose_hrnet_w48_384x288.pth'
+  # PRETRAINED: ''
   TARGET_TYPE: gaussian
   IMAGE_SIZE:
   - 288
