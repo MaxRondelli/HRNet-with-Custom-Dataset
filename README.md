@@ -158,12 +158,17 @@ The dataset has 374 images in total divided in 296 for training and 78 for valid
 
 Lower results are obtained than the state-of-the-art presented in the paper. However, good human-pose estimation can be achieved at the inference time, resulting in a practical product that can be used for the purposes of the experiment with your custom dataset.
 
-| Method    | Backbone|Pretrain| Input size | #Params | GFLOPs | AP    | AP^50 | AP^75 | AP^M  | AP^L  | AR    |
-|-----------|---------|--------|-----------|---------|--------|-------|-------|-------|-------|-------|-------|
-| HRNet-W32 | HRNet-W32 | N | 256×192| 28.5M   | 7.1    | 0.384 | 0.761 | 0.321 | 0.103 | 0.398 | 0.473 |
-| HRNet-W32 | HRNet-W32 | N | 384×288| 28.5M   | 16.0   | 0.384 | 0.795 | 0.278 | 0.129 | 0.397 | 0.492 |
-| HRNet-W48 | HRNet-W48 | N | 256×192| 63.6M   | 14.6   | 0.501 | **0.863** | 0.452 | **0.252** | 0.515 | 0.560 |
-| HRNet-W48 | HRNet-W48 | N | 384×288| 63.6M   | 32.8   | **0.526** | 0.831 | **0.537** | 0.077 | **0.548** | **0.581** |
+| Method     | Backbone  | Pretrain | Input size | #Params | GFLOPs | AP    | AP<sup>50</sup> | AP<sup>75</sup> | AP<sup>M</sup> | AP<sup>L</sup> | AR    |
+|------------|-----------|----------|------------|---------|--------|-------|-----------------|-----------------|----------------|----------------|-------|
+| HRNet-W32  | HRNet-W32 | N        | 256 x 192  | 28.5M   | 7.1    | 0.384 | 0.761           | 0.321           | 0.103          | 0.398          | 0.473 |
+| HRNet-W32  | HRNet-W32 | Y        | 256 x 192  | 28.5M   | 7.1    | 0.394 | 0.792           | 0.274           | 0.129          | 0.405          | 0.528 |
+| HRNet-W32  | HRNet-W32 | N        | 384 x 288  | 28.5M   | 16.0   | 0.384 | 0.795           | 0.278           | 0.129          | 0.397          | 0.492 |
+| HRNet-W32  | HRNet-W32 | Y        | 384 x 288  | 28.5M   | 16.0   | 0.396 | 0.826           | 0.338           | 0.203          | 0.406          | 0.509 |
+| HRNet-W48  | HRNet-W48 | N        | 256 x 192  | 63.6M   | 14.6   | 0.501 | 0.863           | 0.452           | 0.252          | 0.515          | 0.560 |
+| HRNet-W48  | HRNet-W48 | Y        | 256 x 192  | 63.6M   | 14.6   | 0.426 | 0.804           | 0.367           | 0.129          | 0.440          | 0.544 |
+| HRNet-W48  | HRNet-W48 | N        | 384 x 288  | 63.6M   | 32.8   | 0.526 | 0.831           | 0.537           | 0.077          | 0.548          | 0.581 |
+| HRNet-W48  | HRNet-W48 | Y        | 384 x 288  | 63.6M   | 32.8   | **0.568** | **0.950** | **0.579** | **0.253** | **0.584** | **0.665** |
+
 ## Acknowledgments
 This repository is based on the original HRNet repository. I extend our gratitude for their pioneering work in high-resolution visual recognition.
 
