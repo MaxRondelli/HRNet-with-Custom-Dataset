@@ -16,7 +16,7 @@ DATASET:
   DATA_FORMAT: png
   FLIP: true
   NUM_JOINTS_HALF_BODY: 6
-  PROB_HALF_BODY: 0.3
+  PROB_HALF_BODY: 0.5
   ROOT: '/home/massimorondelli/HRNet-with-Custom-Dataset/data/custom_dataset/'
   ROT_FACTOR: 45
   SCALE_FACTOR: 0.35
@@ -110,13 +110,13 @@ TEST:
   BATCH_SIZE_PER_GPU: 8
   COCO_BBOX_FILE: ''
   BBOX_THRE: 1.0
-  IMAGE_THRE: 0.0
+  IMAGE_THRE: 0.6
   IN_VIS_THRE: 0.2
   MODEL_FILE: '/home/massimorondelli/HRNet-with-Custom-Dataset/tools/output/custom_dataset/pose_hrnet/w48_384x288_adam_lr1e-3/model_best.pth'
   NMS_THRE: 1.0
   OKS_THRE: 0.9
-  USE_GT_BBOX: true
-  FLIP_TEST: true
+  USE_GT_BBOX: false
+  FLIP_TEST: false
   POST_PROCESS: true
   SHIFT_HEATMAP: true
 DEBUG:

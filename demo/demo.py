@@ -20,6 +20,7 @@ import cv2
 import numpy as np
 import time
 
+from tqdm import tqdm
 
 import _init_paths
 import models
@@ -59,7 +60,7 @@ CUSTOM_DATASET_INSTANCE_CATEGORY_NAMES = [
 ]
 
 SKELETON = [
-    [0, 2], [2, 4], [4, 10], [10, 8], [8, 6], [10, 11], [4, 5], [1, 3], [3, 5], [5, 11], [11, 9], [9, 7] 
+    [0, 2], [2, 4], [4, 10], [10, 8], [8, 6], [10, 11], [4, 5], [3, 5], [5, 11], [11, 9], [9, 7] 
 ]
 
 CocoColors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
@@ -69,26 +70,26 @@ NUM_KPTS = 12
 
 CTX = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
-def draw_pose(keypoints,img):
-    """draw the keypoints and the skeletons.
-    :params keypoints: the shape should be equal to [12,2]
-    :params img:
+def draw_pose(keypoints, maxvals, img, confidence_threshold=0.0):
     """
-    assert keypoints.shape == (NUM_KPTS,2)
+    Draw the keypoints and the skeletons.
+    :param keypoints: the shape should be equal to [NUM_KPTS, 2]
+    :param maxvals: the shape should be equal to [NUM_KPTS, 1]
+    :param img: the image to draw on
+    :param confidence_threshold: minimum confidence to draw a keypoint
+    """
+    assert keypoints.shape == (NUM_KPTS, 2)
+    assert maxvals.shape == (NUM_KPTS, 1)
     for i in range(len(SKELETON)):
         kpt_a, kpt_b = SKELETON[i][0], SKELETON[i][1]
-        x_a, y_a = keypoints[kpt_a][0],keypoints[kpt_a][1]
-        x_b, y_b = keypoints[kpt_b][0],keypoints[kpt_b][1] 
-        cv2.circle(img, (int(x_a), int(y_a)), 6, CocoColors[i], -1)
-        cv2.circle(img, (int(x_b), int(y_b)), 6, CocoColors[i], -1)
-        cv2.line(img, (int(x_a), int(y_a)), (int(x_b), int(y_b)), CocoColors[i], 2)
-
-def draw_bbox(box,img):
-    """draw the detected bounding box on the image.
-    :param img:
-    """
-    cv2.rectangle(img, box[0], box[1], color=(0, 255, 0),thickness=3)
-
+        x_a, y_a = keypoints[kpt_a]
+        x_b, y_b = keypoints[kpt_b]
+        conf_a, conf_b = maxvals[kpt_a], maxvals[kpt_b]
+        
+        if conf_a > confidence_threshold and conf_b > confidence_threshold:
+            cv2.circle(img, (int(x_a), int(y_a)), 6, CocoColors[i], -1)
+            cv2.circle(img, (int(x_b), int(y_b)), 6, CocoColors[i], -1)
+            cv2.line(img, (int(x_a), int(y_a)), (int(x_b), int(y_b)), CocoColors[i], 2)
 
 def get_person_detection_boxes(model, img, threshold=0.5):
     pred = model(img)
@@ -135,15 +136,14 @@ def get_pose_estimation_prediction(pose_model, image, center, scale):
     with torch.no_grad():
         # compute output heatmap
         output = pose_model(model_input)
-        preds, _ = get_final_preds(
+        preds, maxvals = get_final_preds(
             cfg,
             output.clone().cpu().numpy(),
             np.asarray([center]),
             np.asarray([scale]))
-
-        return preds
-
-
+        
+        return preds, maxvals
+    
 def box_to_center_scale(box, model_image_width, model_image_height):
     """convert a box to center,scale information required for pose transformation
     Parameters
@@ -215,6 +215,7 @@ def main():
     cudnn.benchmark = cfg.CUDNN.BENCHMARK
     torch.backends.cudnn.deterministic = cfg.CUDNN.DETERMINISTIC
     torch.backends.cudnn.enabled = cfg.CUDNN.ENABLED
+    KEYPOINT_CONFIDENCE_THRESHOLD = 0.3
 
     args = parse_args()
     update_config(cfg, args)
@@ -254,50 +255,55 @@ def main():
             save_path = 'output.avi'
             fourcc = cv2.VideoWriter_fourcc(*'XVID')
             out = cv2.VideoWriter(save_path,fourcc, 24.0, (int(vidcap.get(3)),int(vidcap.get(4))))
-        while True:
-            ret, image_bgr = vidcap.read()
 
-            if ret:
-                last_time = time.time()
-                image = image_bgr[:, :, [2, 1, 0]]
+        # Get total frame count for tqdm
+        total_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+        with tqdm(total=total_frames, desc="Processing video") as pbar:
+            while True:
+                ret, image_bgr = vidcap.read()
 
-                input = []
-                img = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
-                img_tensor = torch.from_numpy(img/255.).permute(2,0,1).float().to(CTX)
-                input.append(img_tensor)
+                if ret:
+                    last_time = time.time()
+                    image = image_bgr[:, :, [2, 1, 0]]
 
-                # object detection box
-                pred_boxes = get_person_detection_boxes(box_model, input, threshold=0.75)
+                    input = []
+                    img = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+                    img_tensor = torch.from_numpy(img/255.).permute(2,0,1).float().to(CTX)
+                    input.append(img_tensor)
 
-                # pose estimation
-                if len(pred_boxes) >= 1:
-                    for box in pred_boxes:
-                        center, scale = box_to_center_scale(box, cfg.MODEL.IMAGE_SIZE[0], cfg.MODEL.IMAGE_SIZE[1])
-                        image_pose = image.copy() if cfg.DATASET.COLOR_RGB else image_bgr.copy()
-                        pose_preds = get_pose_estimation_prediction(pose_model, image_pose, center, scale)
-                        if len(pose_preds)>=1:
-                            for kpt in pose_preds:
-                                draw_pose(kpt, image_bgr) # draw the poses
+                    # object detection box
+                    pred_boxes = get_person_detection_boxes(box_model, input, threshold=0.75)
 
-                print("count pose: " + str(count_pose))
-                count_pose += 1 
+                    # pose estimation
+                    if len(pred_boxes) >= 1:
+                            for box in pred_boxes:
+                                center, scale = box_to_center_scale(box, cfg.MODEL.IMAGE_SIZE[0], cfg.MODEL.IMAGE_SIZE[1])
+                                image_pose = image.copy() if cfg.DATASET.COLOR_RGB else image_bgr.copy()
+                                pose_preds, pose_scores = get_pose_estimation_prediction(pose_model, image_pose, center, scale)
+                                if len(pose_preds) >= 1:
+                                    for pred, score in zip(pose_preds, pose_scores):
+                                        draw_pose(pred, score, image_bgr, confidence_threshold=KEYPOINT_CONFIDENCE_THRESHOLD)
 
-                if args.showFps:
-                    fps = 1/(time.time()-last_time)
-                    img = cv2.putText(image_bgr, 'fps: '+ "%.2f"%(fps), (25, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
+                    # Update tqdm progress bar
+                    pbar.update(1)
+                    # print("count pose: " + str(count_pose))
+                    # count_pose += 1 
 
-                if args.write:
-                    out.write(image_bgr)
-            else:
-                print('cannot load the video.')
-                break
+                    if args.showFps:
+                        fps = 1/(time.time()-last_time)
+                        img = cv2.putText(image_bgr, 'fps: '+ "%.2f"%(fps), (25, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)
 
-        cv2.destroyAllWindows()
-        vidcap.release()
-        if args.write:
-            print('video has been saved as {}'.format(save_path))
-            out.release()
+                    if args.write:
+                        out.write(image_bgr)
+                else:
+                    print('cannot load the video.')
+                    break
 
+            cv2.destroyAllWindows()
+            vidcap.release()
+            if args.write:
+                print('video has been saved as {}'.format(save_path))
+                out.release()
     else:
         # estimate on the image
         last_time = time.time()
@@ -313,14 +319,14 @@ def main():
 
         # pose estimation
         if len(pred_boxes) >= 1:
-            for box in pred_boxes:
-                center, scale = box_to_center_scale(box, cfg.MODEL.IMAGE_SIZE[0], cfg.MODEL.IMAGE_SIZE[1])
-                image_pose = image.copy() if cfg.DATASET.COLOR_RGB else image_bgr.copy()
-                pose_preds = get_pose_estimation_prediction(pose_model, image_pose, center, scale)
-                if len(pose_preds)>=1:
-                    for kpt in pose_preds:
-                        draw_pose(kpt,image_bgr) # draw the poses
-        
+                for box in pred_boxes:
+                    center, scale = box_to_center_scale(box, cfg.MODEL.IMAGE_SIZE[0], cfg.MODEL.IMAGE_SIZE[1])
+                    image_pose = image.copy() if cfg.DATASET.COLOR_RGB else image_bgr.copy()
+                    pose_preds, pose_scores = get_pose_estimation_prediction(pose_model, image_pose, center, scale)
+                    if len(pose_preds) >= 1:
+                        for pred, score in zip(pose_preds, pose_scores):
+                            draw_pose(pred, score, image_bgr, confidence_threshold=KEYPOINT_CONFIDENCE_THRESHOLD)
+
         if args.showFps:
             fps = 1/(time.time()-last_time)
             img = cv2.putText(image_bgr, 'fps: '+ "%.2f"%(fps), (25, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 2)

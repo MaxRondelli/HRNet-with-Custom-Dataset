@@ -80,8 +80,8 @@ class CustomDataset(JointsDataset):
         # self.flip_pairs = [[1, 2], [3, 4], [5, 6], [7, 8],
         #                    [9, 10], [11, 12], [13, 14], [15, 16]]
         self.parent_ids = None
-        self.upper_body_ids = (0, 1, 2, 3, 4, 5)
-        self.lower_body_ids = (6, 7, 8, 9, 10, 11)
+        self.upper_body_ids = (4, 5, 6, 7, 8, 9, 10, 11)
+        self.lower_body_ids = (0, 1, 2, 3)
 
         self.joints_weight = np.array(
             [

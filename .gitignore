@@ -97,3 +97,5 @@ plot/
 lib/cocoapi
 tools/log
 tools/output
+demo/input_video
+demo/output.*
