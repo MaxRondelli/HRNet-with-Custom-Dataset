@@ -127,7 +127,7 @@ DATASET:
   TEST_SET: 'val'
 ```
 ### 4. Adjust Keypoints
-In the original COCO dataset, there are 17 keypoints. However, in mine custom dataset, there are only 12 keypoints. You must modify the keypoint configurations accordingly to your dataset.
+In the original COCO dataset, there are 17 keypoints. However, in my custom dataset, there are only 12 keypoints. You must modify the keypoint configurations accordingly to your dataset.
 
 In the configuration file (.yaml) update the `NUM_JOINTS` parameter:
 ```yaml
